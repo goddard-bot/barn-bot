@@ -99,7 +99,7 @@ void loop()
 
 //  analogWrite(REDPIN, val);
 
-//  pulse();
+  pulse();
 
   buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH && mm > 200) {
@@ -192,25 +192,25 @@ void right() {
 }
 
 void red(int red) {
-  redVal = map(red, 0, 9, 0, 255);
+  redVal = map(red, 0, 9, 0, 100);
   analogWrite(REDPIN, redVal);
   redMax = redVal;
+  Serial.println(red);
 }
 
 void green(int green) {
-  greenVal = map(green, 0, 9, 0, 255);
+  greenVal = map(green, 0, 9, 0, 100);
   analogWrite(GREENPIN, greenVal);
   greenMax = greenVal;
 }
 
 void blue(int blue) {
-  blueVal = map(blue, 0, 9, 0, 255);
+  blueVal = map(blue, 0, 9, 0, 100);
   analogWrite(BLUEPIN, blueVal);
   blueMax = blueVal;
 }
 
 void pulse() {
-  
 
   int newRedVal = mm;
   newRedVal = map(newRedVal, 0, 500, redMax, 0);
@@ -243,19 +243,44 @@ void interruptFunction() {
 
 void bufferUpdated() {
   if(buffer[0] == 'B') {
-    red(atoi(buffer[1]));
-    green(atoi(buffer[2]));
-    blue(atoi(buffer[3]));
+    int redIn = buffer[1] - '0';
+    red(redIn);
+    int greenIn = buffer[2] - '0';
+    green(greenIn);
+    int blueIn = buffer[3] - '0';
+    blue(blueIn);
     
     switch(buffer[4]) {
       case 'A'  :
         Serial.print('A');
          break;
+      case 'F'  :
+        if(mm > 200) {
+          forward();
+        } else {
+          backwards();
+          if(random(0, 10) < 5) {
+            right();
+          }
+          else {
+            left();
+          }
+        }
+         break;
+      case 'R'  :
+        backwards();
+         break;
+      case 'C'  :
+        right();
+         break;
+      case 'W'  :
+        left();
+         break;
     }
+
+    Serial.println("i got it");
   }
-  else {
-    return;
-  }
+  
   Serial.write((char*)buffer);
   Serial.println();
   flag = 0;
