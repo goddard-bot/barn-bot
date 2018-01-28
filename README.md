@@ -1,4 +1,4 @@
-# Brickhack 4: BARN
+# Brickhack 4: Goddard
 
 ## Robot
 
