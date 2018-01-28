@@ -3,14 +3,22 @@
 #define REDPIN 5
 #define GREENPIN 6
 #define BLUEPIN 3
+#define enA 9
+#define in1 22
+#define in2 23
+#define enB 8
+#define in3 24
+#define in4 25
 
-RH_NRF24 nrf24(4, 53);
+RH_NRF24 nrf24(48, 53);
 
 const int buttonPin = 2;
 const int pingPin = 7;
 
 int buttonState = 0; 
 int i = 0;
+int motorSpeedA = 0;
+int motorSpeedB = 0;
 
 void setup() 
 {
@@ -20,45 +28,50 @@ void setup()
     Serial.println("init failed");
   if (!nrf24.setChannel(1))
     Serial.println("setChannel failed");
-  if (!nrf24.setRF(RH_NRF24::DataRate2Mbps, RH_NRF24::TransmitPower0dBm))
+  if (!nrf24.setRF(RH_NRF24::DataRate250kbps, RH_NRF24::TransmitPower0dBm))
     Serial.println("setRF failed");
 
   pinMode(REDPIN, OUTPUT);
   pinMode(GREENPIN, OUTPUT);
   pinMode(BLUEPIN, OUTPUT);
-  
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
  }
 void loop()
 {
-  
-   Serial.println("Sending to nrf24_server");
-  // Send a message to nrf24_server
-  uint8_t data[16];
-  itoa(i, data, 10);
-  nrf24.send(data, sizeof(data));
-  
-  nrf24.waitPacketSent();
-  // Now wait for a reply
-  uint8_t buf[RH_NRF24_MAX_MESSAGE_LEN];
-  uint8_t len = sizeof(buf);
-  if (nrf24.waitAvailableTimeout(500))
-  { 
-    // Should be a reply message for us now   
-    if (nrf24.recv(buf, &len))
-    {
-      Serial.print("got reply: ");
-      Serial.println((char*)buf);
-    }
-    else
-    {
-      Serial.println("recv failed");
-    }
-  }
-  else
-  {
-    Serial.println("No reply, is nrf24_server running?");
-  }
-  delay(400);
+//  Serial.println("Sending to nrf24_server");
+//  // Send a message to nrf24_server
+//  uint8_t data[16];
+//  itoa(i, data, 10);
+//  nrf24.send(data, sizeof(data));
+//  
+//  nrf24.waitPacketSent();
+//  // Now wait for a reply
+//  uint8_t buf[RH_NRF24_MAX_MESSAGE_LEN];
+//  uint8_t len = sizeof(buf);
+//  if (nrf24.waitAvailableTimeout(500))
+//  { 
+//    // Should be a reply message for us now   
+//    if (nrf24.recv(buf, &len))
+//    {
+//      Serial.print("got reply: ");
+//      Serial.println((char*)buf);
+//    }
+//    else
+//    {
+//      Serial.println("recv failed");
+//    }
+//  }
+//  else
+//  {
+//    Serial.println("No reply, is nrf24_server running?");
+//  }
+//  delay(400);
+   
   long duration, inches;
   double mm;
 
@@ -93,10 +106,19 @@ void loop()
 
   buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    motorSpeedA = 255;
+    motorSpeedB = 255;
     Serial.println("on");
   } else {
-    
+    motorSpeedA = 0;
+    motorSpeedB = 0;
   }
+  analogWrite(enA, motorSpeedA); 
+  analogWrite(enB, motorSpeedB); 
   i++;
   
 }
