@@ -96,7 +96,7 @@ void loop()
   Serial.println();
 
   int val = mm;
-  val = map(val, 0, 1175, 255, 0);
+  val = map(val, 0, 500, 255, 0);
   if(val < 0) {
     val = 0;
   }
@@ -105,7 +105,7 @@ void loop()
   analogWrite(REDPIN, val);
 
   buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH && val < 240) {
+  if (buttonState == HIGH && mm < 240) {
     digitalWrite(in1, LOW);
     digitalWrite(in2, HIGH);
     digitalWrite(in3, LOW);
