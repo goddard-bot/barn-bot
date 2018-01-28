@@ -1,27 +1,64 @@
-#include <Servo.h>
+#include <SPI.h>
+#include <RH_NRF24.h>
 #define REDPIN 5
 #define GREENPIN 6
 #define BLUEPIN 3
 
-Servo servoLeft;         
-Servo servoRight;
+RH_NRF24 nrf24(4, 53);
 
+const int buttonPin = 2;
 const int pingPin = 7;
+
+int buttonState = 0; 
+int i = 0;
+
 void setup() 
 {
   Serial.begin(9600);
 
+  if (!nrf24.init())
+    Serial.println("init failed");
+  if (!nrf24.setChannel(1))
+    Serial.println("setChannel failed");
+  if (!nrf24.setRF(RH_NRF24::DataRate2Mbps, RH_NRF24::TransmitPower0dBm))
+    Serial.println("setRF failed");
+
   pinMode(REDPIN, OUTPUT);
   pinMode(GREENPIN, OUTPUT);
   pinMode(BLUEPIN, OUTPUT);
-
-  servoLeft.attach(10); 
-  servoRight.attach(9);
-}
+  
+ }
 void loop()
 {
   
-
+   Serial.println("Sending to nrf24_server");
+  // Send a message to nrf24_server
+  uint8_t data[16];
+  itoa(i, data, 10);
+  nrf24.send(data, sizeof(data));
+  
+  nrf24.waitPacketSent();
+  // Now wait for a reply
+  uint8_t buf[RH_NRF24_MAX_MESSAGE_LEN];
+  uint8_t len = sizeof(buf);
+  if (nrf24.waitAvailableTimeout(500))
+  { 
+    // Should be a reply message for us now   
+    if (nrf24.recv(buf, &len))
+    {
+      Serial.print("got reply: ");
+      Serial.println((char*)buf);
+    }
+    else
+    {
+      Serial.println("recv failed");
+    }
+  }
+  else
+  {
+    Serial.println("No reply, is nrf24_server running?");
+  }
+  delay(400);
   long duration, inches;
   double mm;
 
@@ -53,6 +90,15 @@ void loop()
   Serial.println(val);
 
   analogWrite(REDPIN, val);
+
+  buttonState = digitalRead(buttonPin);
+  if (buttonState == HIGH) {
+    Serial.println("on");
+  } else {
+    
+  }
+  i++;
+  
 }
 
 long microsecondsToInches(long microseconds) {
@@ -63,28 +109,4 @@ double microsecondsToMillimeters(long microseconds) {
   return microseconds / 2.9 / 2;
 }
 
-// Motion routines for forward, reverse, turns, and stop
-void forward() {
-  servoLeft.write(0);
-  servoRight.write(180);
-}
-
-void reverse() {
-  servoLeft.write(180);
-  servoRight.write(0);
-}
-
-void turnRight() {
-  servoLeft.write(180);
-  servoRight.write(180);
-}
-void turnLeft() {
-  servoLeft.write(0);
-  servoRight.write(0);
-}
-
-void stopRobot() {
-  servoLeft.write(90);
-  servoRight.write(90);
-}
 
