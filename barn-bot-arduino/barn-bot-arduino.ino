@@ -1,8 +1,9 @@
 #include <SPI.h>
 #include <RH_NRF24.h>
+#include <avr/sleep.h> 
 #define REDPIN 5
 #define GREENPIN 6
-#define BLUEPIN 3
+#define BLUEPIN 4
 #define enA 9
 #define in1 22
 #define in2 23
@@ -105,13 +106,8 @@ void loop()
   analogWrite(REDPIN, val);
 
   buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH && mm < 240) {
-    digitalWrite(in1, LOW);
-    digitalWrite(in2, HIGH);
-    digitalWrite(in3, LOW);
-    digitalWrite(in4, HIGH);
-    motorSpeedA = 255;
-    motorSpeedB = 255;
+  if (buttonState == HIGH && mm > 200) {
+    forward();
     Serial.println("on");
   } else {
     motorSpeedA = 0;
@@ -131,4 +127,20 @@ double microsecondsToMillimeters(long microseconds) {
   return microseconds / 2.9 / 2;
 }
 
+void forward() {
+  digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    motorSpeedA = 255;
+    motorSpeedB = 255;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+    delay(100);
+    
+    motorSpeedA = 0;
+    motorSpeedB = 0;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+}
 
