@@ -1,4 +1,3 @@
-#include <pitches.h>
 #include <SPI.h> 
 #include <nRF24L01.h> 
 #include <RF24.h> 
@@ -37,60 +36,6 @@ double mm;
 int redMax;
 int greenMax;
 int blueMax;
-int speakerOut = 12;
-int melody[] = {
-  NOTE_E7, NOTE_E7, 0, NOTE_E7, 
-  0, NOTE_C7, NOTE_E7, 0,
-  NOTE_G7, 0, 0,  0,
-  NOTE_G6, 0, 0, 0, 
-
-  NOTE_C7, 0, 0, NOTE_G6, 
-  0, 0, NOTE_E6, 0, 
-  0, NOTE_A6, 0, NOTE_B6, 
-  0, NOTE_AS6, NOTE_A6, 0, 
-
-  NOTE_G6, NOTE_E7, NOTE_G7, 
-  NOTE_A7, 0, NOTE_F7, NOTE_G7, 
-  0, NOTE_E7, 0,NOTE_C7, 
-  NOTE_D7, NOTE_B6, 0, 0,
-
-  NOTE_C7, 0, 0, NOTE_G6, 
-  0, 0, NOTE_E6, 0, 
-  0, NOTE_A6, 0, NOTE_B6, 
-  0, NOTE_AS6, NOTE_A6, 0, 
-
-  NOTE_G6, NOTE_E7, NOTE_G7, 
-  NOTE_A7, 0, NOTE_F7, NOTE_G7, 
-  0, NOTE_E7, 0,NOTE_C7, 
-  NOTE_D7, NOTE_B6, 0, 0
-};
-//Mario main them tempo
-int noteDurations[] = {
-  12, 12, 12, 12, 
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-  12, 12, 12, 12, 
-
-  12, 12, 12, 12,
-  12, 12, 12, 12, 
-  12, 12, 12, 12, 
-  12, 12, 12, 12, 
-
-  9, 9, 9,
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-
-  9, 9, 9,
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-  12, 12, 12, 12,
-};
 
 void setup() 
 {
@@ -114,6 +59,9 @@ void setup()
   pinMode(in2, OUTPUT);
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
+  red(3);
+  green(1);
+  blue(1);
 }
 void loop()
 {
@@ -247,20 +195,19 @@ void right() {
 }
 
 void red(int red) {
-  redVal = map(red, 0, 9, 0, 100);
+  redVal = map(red, 0, 9, 0, 255);
   analogWrite(REDPIN, redVal);
   redMax = redVal;
-  Serial.println(red);
 }
 
 void green(int green) {
-  greenVal = map(green, 0, 9, 0, 100);
+  greenVal = map(green, 0, 9, 0, 175);
   analogWrite(GREENPIN, greenVal);
   greenMax = greenVal;
 }
 
 void blue(int blue) {
-  blueVal = map(blue, 0, 9, 0, 100);
+  blueVal = map(blue, 0, 9, 0, 80);
   analogWrite(BLUEPIN, blueVal);
   blueMax = blueVal;
 }
@@ -269,18 +216,18 @@ void pulse() {
 
   int newRedVal = mm;
   newRedVal = map(newRedVal, 0, 500, redMax, 0);
-  if(newRedVal < 0) {
-    newRedVal = 0;
+  if(newRedVal < 20) {
+    newRedVal = 20;
   }
   int newGreenVal = mm;
   newGreenVal = map(newGreenVal, 0, 500, greenMax, 0);
-  if(newGreenVal < 0) {
-    newGreenVal = 0;
+  if(newGreenVal < 5) {
+    newGreenVal = 5;
   }
   int newBlueVal = mm;
   newBlueVal = map(newBlueVal, 0, 500, blueMax, 0);
-  if(newBlueVal < 0) {
-    newBlueVal = 0;
+  if(newBlueVal < 1) {
+    newBlueVal = 1;
   }
 
   analogWrite(REDPIN, newRedVal);
@@ -289,24 +236,16 @@ void pulse() {
 }
 
 void no() {
-  
-}
-
-void sing() {
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
-
-    // to calculate the note duration, take one second divided by the note type.
-    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-    int noteDuration = 1000 / noteDurations[thisNote];
-    tone(8, melody[thisNote], noteDuration);
-
-    // to distinguish the notes, set a minimum time between them.
-    // the note's duration + 30% seems to work well:
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    // stop the tone playing:
-    noTone(8);
-  }
+  green(0);
+  blue(0);
+  red(6);
+  delay(100);
+  red(0);
+  delay(40);
+  red(6);
+  delay(100);
+  red(0);
+  delay(40);
 }
 
 void interruptFunction() {
@@ -319,13 +258,6 @@ void interruptFunction() {
 
 void bufferUpdated() {
   if(buffer[0] == 'B') {
-    int redIn = buffer[1] - '0';
-    red(redIn);
-    int greenIn = buffer[2] - '0';
-    green(greenIn);
-    int blueIn = buffer[3] - '0';
-    blue(blueIn);
-    
     switch(buffer[4]) {
       case 'A'  :
         Serial.print('A');
@@ -355,9 +287,15 @@ void bufferUpdated() {
       case 'N'  :
         no();
          break;
+      case 'Z'  :
+         break;
     }
-
-    Serial.println("i got it");
+    int redIn = buffer[1] - '0';
+    red(redIn);
+    int greenIn = buffer[2] - '0';
+    green(greenIn);
+    int blueIn = buffer[3] - '0';
+    blue(blueIn);
   }
   
   Serial.write((char*)buffer);
