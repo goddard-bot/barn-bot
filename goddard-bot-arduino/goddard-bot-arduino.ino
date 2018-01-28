@@ -105,15 +105,9 @@ void loop()
   pulse();
 
   buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH && mm > 200) {
-    forward();
-    Serial.println("on");
-  } else {
-    motorSpeedA = 0;
-    motorSpeedB = 0;
+  if (buttonState == HIGH) {
+    yes();
   }
-  analogWrite(enA, motorSpeedA); 
-  analogWrite(enB, motorSpeedB); 
   i++;
   
 }
@@ -194,6 +188,23 @@ void right() {
     analogWrite(enB, motorSpeedB);
 }
 
+void spin() {
+  digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    motorSpeedA = 255;
+    motorSpeedB = 255;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+    delay(1000);
+    
+    motorSpeedA = 0;
+    motorSpeedB = 0;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+}
+
 void red(int red) {
   redVal = map(red, 0, 9, 0, 255);
   analogWrite(REDPIN, redVal);
@@ -248,6 +259,30 @@ void no() {
   delay(40);
 }
 
+void yes() {
+  red(0);
+  blue(0);
+  green(6);
+  delay(100);
+  green(0);
+  delay(40);
+  green(6);
+  delay(100);
+  green(0);
+  delay(40);
+}
+
+void sleep() {
+  red(0);
+  green(0);
+  for(int i = 0; i < 6; i++) {
+    blue(1);
+    delay(2000);
+    blue(0);
+    delay(1000);
+  }
+}
+
 void interruptFunction() {
  while(wirelessSPI.available()) { 
        wirelessSPI.read( buffer, 5 );
@@ -266,13 +301,14 @@ void bufferUpdated() {
         if(mm > 200) {
           forward();
         } else {
-          backwards();
+          no();
           if(random(0, 10) < 5) {
             right();
           }
           else {
             left();
           }
+          backwards();
         }
          break;
       case 'R'  :
@@ -281,11 +317,20 @@ void bufferUpdated() {
       case 'C'  :
         right();
          break;
+      case 'S'  :
+        spin();
+         break;
       case 'W'  :
         left();
          break;
       case 'N'  :
         no();
+         break;
+      case 'Y'  :
+        yes();
+         break;
+      case 'L'  :
+        sleep();
          break;
       case 'Z'  :
          break;
