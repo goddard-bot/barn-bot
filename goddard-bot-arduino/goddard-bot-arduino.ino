@@ -14,28 +14,33 @@
 
 const int buttonPin = 2;
 const int pingPin = 7;
+const int pinCE = 48; 
+const int pinCSN = 53;
 
 int buttonState = 0; 
-int i = 0;
 int motorSpeedA = 0;
 int motorSpeedB = 0;
 int redVal;
 int greenVal;
 int blueVal;
-
-const int pinCE = 48; 
-const int pinCSN = 53; 
-byte gotByte = 0; 
-volatile int count = 0; 
-int pCount = 0; 
-RF24 wirelessSPI(pinCE, pinCSN); 
-const uint64_t pAddress = 0xB00B1E5000LL;  
-uint8_t buffer [6];
-int flag = 0;
-double mm;
 int redMax;
 int greenMax;
 int blueMax;
+int pCount = 0; 
+int flag = 0;
+int red8;
+int green8;
+int blue8;
+
+byte gotByte = 0; 
+volatile int count = 0; 
+RF24 wirelessSPI(pinCE, pinCSN); 
+const uint64_t pAddress = 0xB00B1E5000LL;  
+uint8_t buffer [6];
+
+double mm;
+unsigned long lastCommand;
+unsigned long time;
 
 void setup() 
 {
@@ -65,14 +70,13 @@ void setup()
 }
 void loop()
 {
-  
+  time = millis();
   while(flag == 1) {
     bufferUpdated();
   }   
   
   long duration, inches;
   
-
   pinMode(pingPin, OUTPUT);
   digitalWrite(pingPin, LOW);
   delayMicroseconds(2);
@@ -83,24 +87,8 @@ void loop()
   pinMode(pingPin, INPUT);
   duration = pulseIn(pingPin, HIGH);
 
-  // convert the time into a distance
   inches = microsecondsToInches(duration);
   mm = microsecondsToMillimeters(duration);
-
-//  Serial.print(inches);
-//  Serial.print("in, ");
-//  Serial.print(mm);
-//  Serial.print("mm");
-//  Serial.println();
-
-//  int val = mm;
-//  val = map(val, 0, 500, 255, 0);
-//  if(val < 0) {
-//    val = 0;
-//  }
-//  Serial.println(val);
-
-//  analogWrite(REDPIN, val);
 
   pulse();
 
@@ -108,8 +96,12 @@ void loop()
   if (buttonState == HIGH) {
     yes();
   }
-  i++;
-  
+
+  if(time - lastCommand > 30000) {
+    fidget();
+    Serial.println(lastCommand);
+    lastCommand = millis();
+  }
 }
 
 long microsecondsToInches(long microseconds) {
@@ -205,38 +197,147 @@ void spin() {
     analogWrite(enB, motorSpeedB);
 }
 
+void forwardSlow() {
+  digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    motorSpeedA = 80;
+    motorSpeedB = 80;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+    delay(20);
+    
+    motorSpeedA = 0;
+    motorSpeedB = 0;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+}
+
+void backwardsSlow() {
+  digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+    motorSpeedA = 80;
+    motorSpeedB = 80;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+    delay(20);
+    
+    motorSpeedA = 0;
+    motorSpeedB = 0;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+}
+
+void leftSlow() {
+  digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    digitalWrite(in3, HIGH);
+    digitalWrite(in4, LOW);
+    motorSpeedA = 80;
+    motorSpeedB = 80;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+    delay(20);
+    
+    motorSpeedA = 0;
+    motorSpeedB = 0;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+}
+
+void rightSlow() {
+  digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    digitalWrite(in3, LOW);
+    digitalWrite(in4, HIGH);
+    motorSpeedA = 80;
+    motorSpeedB = 80;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+    delay(20);
+    
+    motorSpeedA = 0;
+    motorSpeedB = 0;
+    analogWrite(enA, motorSpeedA); 
+    analogWrite(enB, motorSpeedB);
+}
+
+void fidget() {
+  if(random(0, 10) < 5) {
+    for(int i = 0; i < random(1, 3); i++) {
+      forwardSlow();
+    }
+    for(int i = 0; i < random(0, 3); i++) {
+      leftSlow();
+    }
+    for(int i = 0; i < random(0, 3); i++) {
+      rightSlow();
+    }
+    for(int i = 0; i < random(0, 3); i++) {
+      backwardsSlow();
+    }
+  }
+  else {
+    for(int i = 0; i < random(0, 3); i++) {
+      backwardsSlow();
+    }
+    for(int i = 0; i < random(0, 3); i++) {
+      rightSlow();
+    }
+    for(int i = 0; i < random(1, 3); i++) {
+      leftSlow();
+    }
+    for(int i = 0; i < random(0, 3); i++) {
+      forwardSlow();
+    }
+  }
+  no();
+  lastCommand = millis();
+  Serial.println(millis());
+  return;
+}
+
 void red(int red) {
   redVal = map(red, 0, 9, 0, 255);
   analogWrite(REDPIN, redVal);
   redMax = redVal;
+  red8 = red;
+  return;
 }
 
 void green(int green) {
   greenVal = map(green, 0, 9, 0, 175);
   analogWrite(GREENPIN, greenVal);
   greenMax = greenVal;
+  green8 = green;
+  return;
 }
 
 void blue(int blue) {
   blueVal = map(blue, 0, 9, 0, 80);
   analogWrite(BLUEPIN, blueVal);
   blueMax = blueVal;
+  blue8 = blue;
+  return;
 }
 
 void pulse() {
-
+  
   int newRedVal = mm;
-  newRedVal = map(newRedVal, 0, 500, redMax, 0);
+  newRedVal = map(newRedVal, 0, 300, redMax, 0);
   if(newRedVal < 20) {
     newRedVal = 20;
   }
   int newGreenVal = mm;
-  newGreenVal = map(newGreenVal, 0, 500, greenMax, 0);
+  newGreenVal = map(newGreenVal, 0, 300, greenMax, 0);
   if(newGreenVal < 5) {
     newGreenVal = 5;
   }
   int newBlueVal = mm;
-  newBlueVal = map(newBlueVal, 0, 500, blueMax, 0);
+  newBlueVal = map(newBlueVal, 0, 300, blueMax, 0);
   if(newBlueVal < 1) {
     newBlueVal = 1;
   }
@@ -247,40 +348,52 @@ void pulse() {
 }
 
 void no() {
-  green(0);
-  blue(0);
-  red(6);
+  analogWrite(REDPIN, 150);
+  analogWrite(GREENPIN, 0);
+  analogWrite(BLUEPIN, 0);
   delay(100);
-  red(0);
+  analogWrite(REDPIN, 0);
   delay(40);
-  red(6);
+  analogWrite(REDPIN, 150);
   delay(100);
-  red(0);
+  analogWrite(REDPIN, 0);
   delay(40);
+  red(red8);
+  green(green8);
+  blue(blue8);
+  return;
 }
 
 void yes() {
-  red(0);
-  blue(0);
-  green(6);
+  analogWrite(REDPIN, 0);
+  analogWrite(GREENPIN, 150);
+  analogWrite(BLUEPIN, 0);
   delay(100);
-  green(0);
+  analogWrite(GREENPIN, 0);
   delay(40);
-  green(6);
+  analogWrite(GREENPIN, 150);
   delay(100);
-  green(0);
+  analogWrite(GREENPIN, 0);
   delay(40);
+  red(red8);
+  green(green8);
+  blue(blue8);
+  return;
 }
 
 void sleep() {
-  red(0);
-  green(0);
+  analogWrite(REDPIN, 0);
+  analogWrite(GREENPIN, 0);
   for(int i = 0; i < 6; i++) {
-    blue(1);
+    analogWrite(BLUEPIN, 20);
     delay(2000);
-    blue(0);
+    analogWrite(BLUEPIN, 0);
     delay(1000);
   }
+  red(red8);
+  green(green8);
+  blue(blue8);
+  return;
 }
 
 void interruptFunction() {
@@ -289,6 +402,7 @@ void interruptFunction() {
  }
  flag = 1;
  detachInterrupt(1);
+ lastCommand = millis();
 }
 
 void bufferUpdated() {
@@ -347,4 +461,6 @@ void bufferUpdated() {
   Serial.println();
   flag = 0;
   attachInterrupt(1, interruptFunction, FALLING);
+  lastCommand = millis();
+  return;
 }
