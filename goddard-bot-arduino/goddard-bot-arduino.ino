@@ -304,13 +304,35 @@ void fidget() {
 
 void demo() {
   for(int i = 0; i < 10; i++) {
-    forward();
+    if(mm > 100) {
+          forward();
+        } else {
+          no();
+          if(random(0, 10) < 5) {
+            right();
+          }
+          else {
+            left();
+          }
+          backwards();
+        }
   }
   for(int i = 0; i < 2; i++) {
     left();
   }
   for(int i = 0; i < 10; i++) {
-    forward();
+    if(mm > 100) {
+          forward();
+        } else {
+          no();
+          if(random(0, 10) < 5) {
+            right();
+          }
+          else {
+            left();
+          }
+          backwards();
+        }
   }
   yes();
   yes();
