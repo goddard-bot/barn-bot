@@ -40,6 +40,7 @@ uint8_t buffer [6];
 
 double mm;
 unsigned long lastCommand;
+unsigned long lastEmotion;
 unsigned long time;
 
 void setup() 
@@ -94,13 +95,16 @@ void loop()
 
   buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH) {
-    yes();
+    demo();
   }
 
   if(time - lastCommand > 30000) {
     fidget();
     Serial.println(lastCommand);
     lastCommand = millis();
+  } else if(time - lastEmotion > 5000) {
+    showEmotion();
+    lastEmotion = millis();
   }
 }
 
@@ -294,18 +298,53 @@ void fidget() {
       forwardSlow();
     }
   }
-  no();
   lastCommand = millis();
   Serial.println(millis());
-  return;
 }
 
+void demo() {
+  for(int i = 0; i < 10; i++) {
+    forward();
+  }
+  for(int i = 0; i < 2; i++) {
+    left();
+  }
+  for(int i = 0; i < 10; i++) {
+    forward();
+  }
+  yes();
+  yes();
+  no();
+  rainbow();
+  rainbow();
+  spin();
+}
+
+void rainbow() {
+  for(int i = 0; i < 10; i++) {
+    red(i);
+    green(9 - i);
+    blue(0);
+    delay(80);
+  }
+  for(int i = 0; i < 10; i++) {
+    red(9 - i);
+    green(0);
+    blue(i);
+    delay(80);
+  }
+  for(int i = 0; i < 10; i++) {
+    red(0);
+    green(i);
+    blue(9 - i);
+    delay(80);
+  }
+}
 void red(int red) {
   redVal = map(red, 0, 9, 0, 255);
   analogWrite(REDPIN, redVal);
   redMax = redVal;
   red8 = red;
-  return;
 }
 
 void green(int green) {
@@ -313,7 +352,6 @@ void green(int green) {
   analogWrite(GREENPIN, greenVal);
   greenMax = greenVal;
   green8 = green;
-  return;
 }
 
 void blue(int blue) {
@@ -321,7 +359,6 @@ void blue(int blue) {
   analogWrite(BLUEPIN, blueVal);
   blueMax = blueVal;
   blue8 = blue;
-  return;
 }
 
 void pulse() {
@@ -347,6 +384,28 @@ void pulse() {
   analogWrite(BLUEPIN, newBlueVal);
 }
 
+void showEmotion() {
+  analogWrite(REDPIN, redMax);
+  analogWrite(GREENPIN, greenMax);
+  analogWrite(BLUEPIN, blueMax);
+  delay(200);
+  analogWrite(REDPIN, 0);
+  analogWrite(GREENPIN, 0);
+  analogWrite(BLUEPIN, 0);
+  delay(40);
+  analogWrite(REDPIN, redMax);
+  analogWrite(GREENPIN, greenMax);
+  analogWrite(BLUEPIN, blueMax);
+  delay(200);
+  analogWrite(REDPIN, 0);
+  analogWrite(GREENPIN, 0);
+  analogWrite(BLUEPIN, 0);
+  delay(40);
+  red(red8);
+  green(green8);
+  blue(blue8);
+}
+
 void no() {
   analogWrite(REDPIN, 150);
   analogWrite(GREENPIN, 0);
@@ -361,7 +420,6 @@ void no() {
   red(red8);
   green(green8);
   blue(blue8);
-  return;
 }
 
 void yes() {
@@ -378,7 +436,6 @@ void yes() {
   red(red8);
   green(green8);
   blue(blue8);
-  return;
 }
 
 void sleep() {
@@ -393,7 +450,6 @@ void sleep() {
   red(red8);
   green(green8);
   blue(blue8);
-  return;
 }
 
 void interruptFunction() {
@@ -446,6 +502,12 @@ void bufferUpdated() {
       case 'L'  :
         sleep();
          break;
+      case 'D'  :
+        demo();
+         break;
+      case 'O'  :
+        rainbow();
+         break;
       case 'Z'  :
          break;
     }
@@ -462,5 +524,4 @@ void bufferUpdated() {
   flag = 0;
   attachInterrupt(1, interruptFunction, FALLING);
   lastCommand = millis();
-  return;
 }
